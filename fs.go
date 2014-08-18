@@ -49,6 +49,23 @@ type memFileSystem struct {
 func (fs *memFileSystem) Open(name string) (http.File, error) {
 	name = filepath.Join(fs.root, name)
 
+	f, err := os.Open(name)
+
+	if err != nil {
+	    return nil, errors.New("Failed to open file")
+	}
+
+	stat, err := f.Stat()
+
+	if err != nil {
+	    return nil, errors.New("Failed to stat")
+	}
+
+	switch mode := stat.Mode(); {
+	    case mode.IsDir():
+	    return nil, errors.New("Do not serve directory listings")
+	}
+
 	fs.lock.RLock()
 	fi, ok := fs.cache[name]
 	fs.lock.RUnlock()
