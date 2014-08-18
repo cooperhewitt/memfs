@@ -44,11 +44,14 @@ type memFileSystem struct {
 	cache   map[string]*memFileInfo
 	lock    *sync.RWMutex
 	watcher *fsnotify.Watcher
+	directoryIndex	bool
 }
 
 func (fs *memFileSystem) Open(name string) (http.File, error) {
+
 	name = filepath.Join(fs.root, name)
 
+	if !fs.directoryIndex {
 	f, err := os.Open(name)
 
 	if err != nil {
@@ -64,6 +67,7 @@ func (fs *memFileSystem) Open(name string) (http.File, error) {
 	switch mode := stat.Mode(); {
 	    case mode.IsDir():
 	    return nil, errors.New("Do not serve directory listings")
+	}
 	}
 
 	fs.lock.RLock()
@@ -195,7 +199,7 @@ func (fs *memFileSystem) watcherCallback() {
 }
 
 // New creates a new in memory filesystem at root.
-func New(root string) (http.FileSystem, error) {
+func New(root string directoryIndex bool) (http.FileSystem, error) {
 	root = path.Clean(root)
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -207,6 +211,7 @@ func New(root string) (http.FileSystem, error) {
 		cache:   map[string]*memFileInfo{},
 		lock:    &sync.RWMutex{},
 		watcher: watcher,
+		directoryIndex: directoryIndex
 	}
 
 	// Set watcher callback.
