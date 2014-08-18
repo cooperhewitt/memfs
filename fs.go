@@ -40,11 +40,11 @@ func init() {
 }
 
 type memFileSystem struct {
-	root    string
-	cache   map[string]*memFileInfo
-	lock    *sync.RWMutex
-	watcher *fsnotify.Watcher
-	directoryIndex	bool
+	root           string
+	cache          map[string]*memFileInfo
+	lock           *sync.RWMutex
+	watcher        *fsnotify.Watcher
+	directoryIndex bool
 }
 
 func (fs *memFileSystem) Open(name string) (http.File, error) {
@@ -52,22 +52,22 @@ func (fs *memFileSystem) Open(name string) (http.File, error) {
 	name = filepath.Join(fs.root, name)
 
 	if !fs.directoryIndex {
-	f, err := os.Open(name)
+		f, err := os.Open(name)
 
-	if err != nil {
-	    return nil, errors.New("Failed to open file")
-	}
+		if err != nil {
+			return nil, errors.New("Failed to open file")
+		}
 
-	stat, err := f.Stat()
+		stat, err := f.Stat()
 
-	if err != nil {
-	    return nil, errors.New("Failed to stat")
-	}
+		if err != nil {
+			return nil, errors.New("Failed to stat")
+		}
 
-	switch mode := stat.Mode(); {
-	    case mode.IsDir():
-	    return nil, errors.New("Do not serve directory listings")
-	}
+		switch mode := stat.Mode(); {
+		case mode.IsDir():
+			return nil, errors.New("Do not serve directory listings")
+		}
 	}
 
 	fs.lock.RLock()
@@ -199,7 +199,7 @@ func (fs *memFileSystem) watcherCallback() {
 }
 
 // New creates a new in memory filesystem at root.
-func New(root string directoryIndex bool) (http.FileSystem, error) {
+func New(root string, directoryIndex bool) (http.FileSystem, error) {
 	root = path.Clean(root)
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -207,11 +207,11 @@ func New(root string directoryIndex bool) (http.FileSystem, error) {
 	}
 
 	memFS := &memFileSystem{
-		root:    root,
-		cache:   map[string]*memFileInfo{},
-		lock:    &sync.RWMutex{},
-		watcher: watcher,
-		directoryIndex: directoryIndex
+		root:           root,
+		cache:          map[string]*memFileInfo{},
+		lock:           &sync.RWMutex{},
+		watcher:        watcher,
+		directoryIndex: directoryIndex,
 	}
 
 	// Set watcher callback.
